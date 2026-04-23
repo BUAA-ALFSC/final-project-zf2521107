@@ -3,4 +3,4 @@
 【作业任务】：Comment
 【链接】：https://gitcode.com/cann/asc-devkit/issues/526
 【截图】
-<img src = >
+![img](./imgs/Comment.png)
