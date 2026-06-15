@@ -1,0 +1,597 @@
+# ===============================================================================================
+# The following shows the last analyze fail log message.
+# ===============================================================================================
+
+----------------------------------------------------
+- Caught exception:
+----------------------------------------------------
+For 'Map', the length of tuples must be the same. 
+The length of the second element in Map is 0, but the length of the third element in Map is 10.
+
+----------------------------------------------------
+- C++ Call Stack: (For framework developers)
+----------------------------------------------------
+mindspore\ccsrc\frontend\operator\composite\map.cc:125 mindspore::prim::Map::CheckArgsInSequence
+
+----------------------------------------------------
+- The Traceback of Net Construct Code:
+----------------------------------------------------
+# 0 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:801~802, 8~64
+        if not self.use_offload:
+# 1 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:802, 12~64
+            gradients = self.gradients_centralization(gradients)
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 2 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:813, 15~98
+        return self._apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)
+               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 3 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:745~791, 8~61
+        if self.use_offload:
+# 4 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:754~791, 12~61
+            if self.is_group_lr:
+# 5 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:774~791, 16~61
+                if self.use_lazy:
+# 6 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:780~791, 20~61
+                    if self.use_amsgrad:
+# 7 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787~791, 24~61
+                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,
+                        ^
+# 8 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:780~791, 20~61
+                    if self.use_amsgrad:
+# 9 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:774~791, 16~61
+                if self.use_lazy:
+# 10 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:754~791, 12~61
+            if self.is_group_lr:
+# 11 In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787~791, 34~61
+                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,
+                                  ^
+
+# ===============================================================================================
+# The following shows the IR when the function graphs evaluation fails to help locate the problem.
+# You can search the last ------------------------> to the node which is evaluated failure.
+# Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.ir to get more instructions.
+# ===============================================================================================
+
+# IR entry: @mindspore_nn_optim_adam_Adam_construct_4
+# Total subgraphs: 0
+
+# Attrs:
+skip_auto_parallel_compile: 1
+
+# Total params: 35
+# Params:
+%para1_gradients: <null>
+%para2_global_step: <Ref[Tensor[Int32]], (1), ref_key=global_step, is_parameter, is_inplace>  :  has_default
+%para3_beta1_power: <Ref[Tensor[Float32]], (), ref_key=beta1_power, is_parameter, is_inplace>  :  has_default
+%para4_beta2_power: <Ref[Tensor[Float32]], (), ref_key=beta2_power, is_parameter>  :  has_default
+%para5_net.0.weight: <Ref[Tensor[Float32]], (50, 2), ref_key=net.0.weight, is_parameter>  :  has_default
+%para6_net.0.bias: <Ref[Tensor[Float32]], (50), ref_key=net.0.bias, is_parameter>  :  has_default
+%para7_net.1.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=net.1.weight, is_parameter>  :  has_default
+%para8_net.1.bias: <Ref[Tensor[Float32]], (50), ref_key=net.1.bias, is_parameter>  :  has_default
+%para9_net.2.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=net.2.weight, is_parameter>  :  has_default
+%para10_net.2.bias: <Ref[Tensor[Float32]], (50), ref_key=net.2.bias, is_parameter>  :  has_default
+%para11_net.3.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=net.3.weight, is_parameter>  :  has_default
+%para12_net.3.bias: <Ref[Tensor[Float32]], (50), ref_key=net.3.bias, is_parameter>  :  has_default
+%para13_net.4.weight: <Ref[Tensor[Float32]], (1, 50), ref_key=net.4.weight, is_parameter>  :  has_default
+%para14_net.4.bias: <Ref[Tensor[Float32]], (1), ref_key=net.4.bias, is_parameter>  :  has_default
+%para15_moment1.net.0.weight: <Ref[Tensor[Float32]], (50, 2), ref_key=moment1.net.0.weight, is_parameter>  :  has_default
+%para16_moment1.net.0.bias: <Ref[Tensor[Float32]], (50), ref_key=moment1.net.0.bias, is_parameter>  :  has_default
+%para17_moment1.net.1.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=moment1.net.1.weight, is_parameter>  :  has_default
+%para18_moment1.net.1.bias: <Ref[Tensor[Float32]], (50), ref_key=moment1.net.1.bias, is_parameter>  :  has_default
+%para19_moment1.net.2.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=moment1.net.2.weight, is_parameter>  :  has_default
+%para20_moment1.net.2.bias: <Ref[Tensor[Float32]], (50), ref_key=moment1.net.2.bias, is_parameter>  :  has_default
+%para21_moment1.net.3.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=moment1.net.3.weight, is_parameter>  :  has_default
+%para22_moment1.net.3.bias: <Ref[Tensor[Float32]], (50), ref_key=moment1.net.3.bias, is_parameter>  :  has_default
+%para23_moment1.net.4.weight: <Ref[Tensor[Float32]], (1, 50), ref_key=moment1.net.4.weight, is_parameter>  :  has_default
+%para24_moment1.net.4.bias: <Ref[Tensor[Float32]], (1), ref_key=moment1.net.4.bias, is_parameter>  :  has_default
+%para25_moment2.net.0.weight: <Ref[Tensor[Float32]], (50, 2), ref_key=moment2.net.0.weight, is_parameter>  :  has_default
+%para26_moment2.net.0.bias: <Ref[Tensor[Float32]], (50), ref_key=moment2.net.0.bias, is_parameter>  :  has_default
+%para27_moment2.net.1.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=moment2.net.1.weight, is_parameter>  :  has_default
+%para28_moment2.net.1.bias: <Ref[Tensor[Float32]], (50), ref_key=moment2.net.1.bias, is_parameter>  :  has_default
+%para29_moment2.net.2.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=moment2.net.2.weight, is_parameter>  :  has_default
+%para30_moment2.net.2.bias: <Ref[Tensor[Float32]], (50), ref_key=moment2.net.2.bias, is_parameter>  :  has_default
+%para31_moment2.net.3.weight: <Ref[Tensor[Float32]], (50, 50), ref_key=moment2.net.3.weight, is_parameter>  :  has_default
+%para32_moment2.net.3.bias: <Ref[Tensor[Float32]], (50), ref_key=moment2.net.3.bias, is_parameter>  :  has_default
+%para33_moment2.net.4.weight: <Ref[Tensor[Float32]], (1, 50), ref_key=moment2.net.4.weight, is_parameter>  :  has_default
+%para34_moment2.net.4.bias: <Ref[Tensor[Float32]], (1), ref_key=moment2.net.4.bias, is_parameter>  :  has_default
+%para35_learning_rate: <Ref[Tensor[Float32]], (), ref_key=learning_rate, is_parameter>  :  has_default
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: mindspore_nn_optim_adam_Adam_construct_4 : 000002B1C9186F30
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:795~813, 4~98/    @jit/
+subgraph @mindspore_nn_optim_adam_Adam_construct_4() {
+  %0(CNode_16) = resolve(NameSpace[Entry: 'mindspore.nn.optim.adam.Adam.construct'], mindspore.nn.optim.adam.Adam.construct, (()))
+      : (<External, NoShape>, <External, NoShape>, <Tuple[Tuple[]], TupleShape(TupleShape())>) -> (<Func, NoShape>)
+      #scope: (Default)
+
+#------------------------> 0
+  %1(CNode_17) = %0(%para1_gradients)
+      : (<Tuple[], TupleShape()>) -> (<null>)
+      #scope: (Default)
+  Return(%1)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:801~802, 8~64/        if not self.use_offload:/
+}
+# Order:
+#   1: @mindspore_nn_optim_adam_Adam_construct_4:CNode_16{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> Entry: 'mindspore.nn.optim.adam.Adam.construct', [2]: ValueNode<Symbol> mindspore.nn.optim.adam.Adam.construct, [3]: ValueNode<ValueTuple> (())}
+#   2: @mindspore_nn_optim_adam_Adam_construct_4:CNode_17{[0]: CNode_16, [1]: param_gradients}
+#   3: @mindspore_nn_optim_adam_Adam_construct_4:CNode_18{[0]: ValueNode<Primitive> Return, [1]: CNode_17}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: mindspore_nn_optim_adam_Adam_construct_4 : 000002B1C917FFF0
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:795~813, 4~98/    @jit/
+subgraph @mindspore_nn_optim_adam_Adam_construct_4(%para0_gradients) {
+
+#------------------------> 1
+  %0(CNode_19) = call @mindspore_nn_optim_adam_Adam_construct_5()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:801~802, 8~64/        if not self.use_offload:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:801~802, 8~64/        if not self.use_offload:/
+}
+# Order:
+#   1: @mindspore_nn_optim_adam_Adam_construct_4:params{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> _parameters}
+#   2: @mindspore_nn_optim_adam_Adam_construct_4:moment1{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> moment1}
+#   3: @mindspore_nn_optim_adam_Adam_construct_4:moment2{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> moment2}
+#   4: @mindspore_nn_optim_adam_Adam_construct_4:CNode_20{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> decay_weight}
+#   5: @mindspore_nn_optim_adam_Adam_construct_4:CNode_21{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#   7: @mindspore_nn_optim_adam_Adam_construct_4:gradients{[0]: CNode_20, [1]: param_gradients}
+#   8: @mindspore_nn_optim_adam_Adam_construct_4:CNode_19{[0]: ValueNode<FuncGraph> mindspore_nn_optim_adam_Adam_construct_5}
+#   9: @mindspore_nn_optim_adam_Adam_construct_4:CNode_18{[0]: ValueNode<Primitive> Return, [1]: CNode_19}
+#  10: @mindspore_nn_optim_adam_Adam_construct_4:CNode_22{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> gradients_centralization}
+#  11: @mindspore_nn_optim_adam_Adam_construct_4:CNode_23{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> scale_grad}
+#  12: @mindspore_nn_optim_adam_Adam_construct_4:CNode_24{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> _grad_sparse_indices_deduplicate}
+#  13: @mindspore_nn_optim_adam_Adam_construct_4:CNode_25{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> get_lr}
+#  14: @mindspore_nn_optim_adam_Adam_construct_4:CNode_26{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> global_step}
+#  15: @mindspore_nn_optim_adam_Adam_construct_4:CNode_27{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> global_step_increase_tensor}
+#  16: @mindspore_nn_optim_adam_Adam_construct_4:CNode_28{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> beta1_power}
+#  17: @mindspore_nn_optim_adam_Adam_construct_4:CNode_29{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> beta1}
+#  18: @mindspore_nn_optim_adam_Adam_construct_4:CNode_30{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> beta2_power}
+#  19: @mindspore_nn_optim_adam_Adam_construct_4:CNode_31{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> beta2}
+#  20: @mindspore_nn_optim_adam_Adam_construct_4:CNode_32{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> _apply_adam}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: mindspore_nn_optim_adam_Adam_construct_5 : 000002B1C9180580
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:795~813, 4~98/    @jit/
+subgraph @mindspore_nn_optim_adam_Adam_construct_5 parent: [subgraph @mindspore_nn_optim_adam_Adam_construct_4]() {
+
+#------------------------> 2
+  %0(CNode_33) = call @mindspore_nn_optim_adam_Adam_construct_6()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:802, 12~64/            gradients = self.gradients_centralization(gradients)/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:802, 12~64/            gradients = self.gradients_centralization(gradients)/
+}
+# Order:
+#   1: @mindspore_nn_optim_adam_Adam_construct_5:CNode_34{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#   3: @mindspore_nn_optim_adam_Adam_construct_5:gradients{[0]: CNode_22, [1]: gradients}
+#   4: @mindspore_nn_optim_adam_Adam_construct_5:CNode_33{[0]: ValueNode<FuncGraph> mindspore_nn_optim_adam_Adam_construct_6}
+#   5: @mindspore_nn_optim_adam_Adam_construct_5:CNode_35{[0]: ValueNode<Primitive> Return, [1]: CNode_33}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: mindspore_nn_optim_adam_Adam_construct_6 : 000002B2656AD560
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:795~813, 4~98/    @jit/
+subgraph @mindspore_nn_optim_adam_Adam_construct_6 parent: [subgraph @mindspore_nn_optim_adam_Adam_construct_5]() {
+  %0(CNode_36) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], assignadd)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:806, 8~22/        self.assignadd(self.global_step, self.global_step_increase_tensor)/
+  %1(CNode_26) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], global_step)
+      : (<External, NoShape>, <External, NoShape>) -> (<Ref[Tensor[Int32]], (1)>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:806, 23~39/        self.assignadd(self.global_step, self.global_step_increase_tensor)/
+  %2(CNode_27) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], global_step_increase_tensor)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tensor[Int32], (1)>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:806, 41~73/        self.assignadd(self.global_step, self.global_step_increase_tensor)/
+  %3(CNode_37) = %0(%1, %2)
+      : (<Ref[Tensor[Int32]], (1)>, <Tensor[Int32], (1)>) -> (<Ref[Tensor[Int32]], (1)>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:806, 8~74/        self.assignadd(self.global_step, self.global_step_increase_tensor)/
+  %4(CNode_28) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], beta1_power)
+      : (<External, NoShape>, <External, NoShape>) -> (<Ref[Tensor[Float32]], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:808, 22~38/        beta1_power = self.beta1_power * self.beta1/
+  %5(CNode_38) = resolve(NameSpace[Ast: 'Namespace:mindspore.graph._parse.trope'], mul)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:808, 22~51/        beta1_power = self.beta1_power * self.beta1/
+  %6(CNode_29) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], beta1)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tensor[Float32], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:808, 41~51/        beta1_power = self.beta1_power * self.beta1/
+  %7(beta1_power) = %5(%4, %6)
+      : (<Ref[Tensor[Float32]], ()>, <Tensor[Float32], ()>) -> (<Tensor[Float32], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:808, 22~51/        beta1_power = self.beta1_power * self.beta1/
+  %8(CNode_39) = call @assign_40(%4, %7)
+      : (<Ref[Tensor[Float32]], ()>, <Tensor[Float32], ()>) -> (<Ref[Tensor[Float32]], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:809, 8~38/        self.beta1_power = beta1_power/
+  %9(CNode_30) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], beta2_power)
+      : (<External, NoShape>, <External, NoShape>) -> (<Ref[Tensor[Float32]], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:810, 22~38/        beta2_power = self.beta2_power * self.beta2/
+  %10(CNode_41) = resolve(NameSpace[Ast: 'Namespace:mindspore.graph._parse.trope'], mul)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:810, 22~51/        beta2_power = self.beta2_power * self.beta2/
+  %11(CNode_31) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], beta2)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tensor[Float32], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:810, 41~51/        beta2_power = self.beta2_power * self.beta2/
+  %12(beta2_power) = %10(%9, %11)
+      : (<Ref[Tensor[Float32]], ()>, <Tensor[Float32], ()>) -> (<Tensor[Float32], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:810, 22~51/        beta2_power = self.beta2_power * self.beta2/
+  %13(CNode_42) = call @assign_40(%9, %12)
+      : (<Ref[Tensor[Float32]], ()>, <Tensor[Float32], ()>) -> (<Ref[Tensor[Float32]], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:811, 8~38/        self.beta2_power = beta2_power/
+  %14(CNode_43) = MakeTuple(%3, %8, %13)
+      : (<Ref[Tensor[Int32]], (1)>, <Ref[Tensor[Float32]], ()>, <Ref[Tensor[Float32]], ()>) -> (<Tuple[Ref[Tensor[Int32]],Ref[Tensor[Float32]]*2], TupleShape((1), (), ())>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:795~813, 4~98/    @jit/
+  %15(CNode_44) = StopGradient(%14)
+      : (<Tuple[Ref[Tensor[Int32]],Ref[Tensor[Float32]]*2], TupleShape((1), (), ())>) -> (<Tuple[Ref[Tensor[Int32]],Ref[Tensor[Float32]]*2], TupleShape((1), (), ())>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:795~813, 4~98/    @jit/
+  %16(CNode_32) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], _apply_adam)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:813, 15~31/        return self._apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)/
+  %17(params) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], _parameters)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:797, 17~33/        params = self._parameters/
+  %18(moment1) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], moment1)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:798, 18~30/        moment1 = self.moment1/
+  %19(moment2) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], moment2)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:799, 18~30/        moment2 = self.moment2/
+  %20(CNode_25) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], get_lr)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:805, 13~24/        lr = self.get_lr()/
+  %21(lr) = %20()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:805, 13~26/        lr = self.get_lr()/
+  %22(CNode_24) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], _grad_sparse_indices_deduplicate)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:804, 20~57/        gradients = self._grad_sparse_indices_deduplicate(gradients)/
+  %23(CNode_23) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], scale_grad)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:803, 20~35/        gradients = self.scale_grad(gradients)/
+  %24(CNode_22) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], gradients_centralization)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:802, 24~53/            gradients = self.gradients_centralization(gradients)/
+  %25(CNode_20) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], decay_weight)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:800, 20~37/        gradients = self.decay_weight(gradients)/
+  %26(gradients) = %25(%para0_gradients)
+      : (<Tuple[], TupleShape()>) -> (<Tuple[], TupleShape()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:800, 20~48/        gradients = self.decay_weight(gradients)/
+  %27(gradients) = %24(%26)
+      : (<Tuple[], TupleShape()>) -> (<Tuple[], TupleShape()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:802, 24~64/            gradients = self.gradients_centralization(gradients)/
+  %28(gradients) = %23(%27)
+      : (<Tuple[], TupleShape()>) -> (<Tuple[], TupleShape()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:803, 20~46/        gradients = self.scale_grad(gradients)/
+  %29(gradients) = %22(%28)
+      : (<Tuple[], TupleShape()>) -> (<Tuple[], TupleShape()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:804, 20~68/        gradients = self._grad_sparse_indices_deduplicate(gradients)/
+
+#------------------------> 3
+  %30(CNode_45) = %16(%17, %7, %12, %18, %19, %21, %29)
+      : (<Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>, <Tensor[Float32], ()>, <Tensor[Float32], ()>, <Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>, <Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>, <Ref[Tensor[Float32]], ()>, <Tuple[], TupleShape()>) -> (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:813, 15~98/        return self._apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)/
+  %31(CNode_46) = Depend(%30, %15) primitive_attrs: {side_effect_propagate: I64(1)} cnode_attrs: {topo_sort_rhs_first: Bool(1)}
+      : (<null>, <Tuple[Ref[Tensor[Int32]],Ref[Tensor[Float32]]*2], TupleShape((1), (), ())>) -> (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:813, 15~98/        return self._apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)/
+  Return(%31)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:813, 8~98/        return self._apply_adam(params, beta1_power, beta2_power, moment1, moment2, lr, gradients)/
+}
+# Order:
+#   1: @mindspore_nn_optim_adam_Adam_construct_6:CNode_47{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#   3: @mindspore_nn_optim_adam_Adam_construct_6:gradients{[0]: CNode_23, [1]: gradients}
+#   4: @mindspore_nn_optim_adam_Adam_construct_6:CNode_48{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#   6: @mindspore_nn_optim_adam_Adam_construct_6:gradients{[0]: CNode_24, [1]: gradients}
+#   7: @mindspore_nn_optim_adam_Adam_construct_6:lr{[0]: CNode_25}
+#   8: @mindspore_nn_optim_adam_Adam_construct_6:CNode_36{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> assignadd}
+#   9: @mindspore_nn_optim_adam_Adam_construct_6:CNode_49{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#  11: @mindspore_nn_optim_adam_Adam_construct_6:CNode_37{[0]: CNode_36, [1]: CNode_26, [2]: CNode_27}
+#  12: @mindspore_nn_optim_adam_Adam_construct_6:CNode_38{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> Ast: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> mul}
+#  13: @mindspore_nn_optim_adam_Adam_construct_6:beta1_power{[0]: CNode_38, [1]: CNode_28, [2]: CNode_29}
+#  14: @mindspore_nn_optim_adam_Adam_construct_6:CNode_39{[0]: ValueNode<FuncGraph> assign_40, [1]: CNode_28, [2]: beta1_power}
+#  15: @mindspore_nn_optim_adam_Adam_construct_6:CNode_41{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> Ast: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> mul}
+#  16: @mindspore_nn_optim_adam_Adam_construct_6:beta2_power{[0]: CNode_41, [1]: CNode_30, [2]: CNode_31}
+#  17: @mindspore_nn_optim_adam_Adam_construct_6:CNode_42{[0]: ValueNode<FuncGraph> assign_40, [1]: CNode_30, [2]: beta2_power}
+#  18: @mindspore_nn_optim_adam_Adam_construct_6:CNode_50{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#  20: @mindspore_nn_optim_adam_Adam_construct_6:CNode_45{[0]: CNode_32, [1]: params, [2]: beta1_power, [3]: beta2_power, [4]: moment1, [5]: moment2, [6]: lr, [7]: gradients}
+#  22: @mindspore_nn_optim_adam_Adam_construct_6:CNode_51{[0]: ValueNode<Primitive> Return, [1]: CNode_46}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_7 : 000002B2656AA350
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_7(%para0_params, %para0_beta1_power, %para0_beta2_power, %para0_moment1, %para0_moment2, %para0_lr, %para0_gradients) {
+
+#------------------------> 4
+  %0(CNode_52) = call @_apply_adam_8()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:745~791, 8~61/        if self.use_offload:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:745~791, 8~61/        if self.use_offload:/
+}
+# Order:
+#   1: @_apply_adam_7:CNode_52{[0]: ValueNode<FuncGraph> _apply_adam_8}
+#   2: @_apply_adam_7:CNode_53{[0]: ValueNode<Primitive> Return, [1]: CNode_52}
+#   3: @_apply_adam_7:CNode_54{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> map_}
+#   4: @_apply_adam_7:CNode_55{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> SymbolStr: 'Namespace:mindspore.nn.optim.adam', [2]: ValueNode<Symbol> F}
+#   5: @_apply_adam_7:CNode_56{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> SymbolStr: 'Namespace:mindspore.nn.optim.adam', [2]: ValueNode<Symbol> _adam_opt}
+#   6: @_apply_adam_7:CNode_57{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> beta1}
+#   7: @_apply_adam_7:CNode_58{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> beta2}
+#   8: @_apply_adam_7:CNode_59{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> eps}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_8 : 000002B2656A6090
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_8 parent: [subgraph @_apply_adam_7]() {
+
+#------------------------> 5
+  %0(CNode_60) = call @_apply_adam_9()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:754~791, 12~61/            if self.is_group_lr:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:754~791, 12~61/            if self.is_group_lr:/
+}
+# Order:
+#   1: @_apply_adam_8:CNode_60{[0]: ValueNode<FuncGraph> _apply_adam_9}
+#   2: @_apply_adam_8:CNode_61{[0]: ValueNode<Primitive> Return, [1]: CNode_60}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_9 : 000002B2656A92A0
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_9 parent: [subgraph @_apply_adam_7]() {
+
+#------------------------> 6
+  %0(CNode_62) = call @_apply_adam_10()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:774~791, 16~61/                if self.use_lazy:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:774~791, 16~61/                if self.use_lazy:/
+}
+# Order:
+#   1: @_apply_adam_9:CNode_62{[0]: ValueNode<FuncGraph> _apply_adam_10}
+#   2: @_apply_adam_9:CNode_63{[0]: ValueNode<Primitive> Return, [1]: CNode_62}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_10 : 000002B2656AC4B0
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_10 parent: [subgraph @_apply_adam_7]() {
+
+#------------------------> 7
+  %0(CNode_64) = call @_apply_adam_11()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:780~791, 20~61/                    if self.use_amsgrad:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:780~791, 20~61/                    if self.use_amsgrad:/
+}
+# Order:
+#   1: @_apply_adam_10:CNode_64{[0]: ValueNode<FuncGraph> _apply_adam_11}
+#   2: @_apply_adam_10:CNode_65{[0]: ValueNode<Primitive> Return, [1]: CNode_64}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_11 : 000002B2656ACA40
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_11 parent: [subgraph @_apply_adam_7]() {
+
+#------------------------> 8
+  %0(CNode_66) = call @_apply_adam_12()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787~791, 24~61/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787~791, 24~61/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+}
+# Order:
+#   1: @_apply_adam_11:CNode_67{[0]: ValueNode<Primitive> getattr, [1]: CNode_55, [2]: ValueNode<StringImm> partial}
+#   2: @_apply_adam_11:CNode_68{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> opt}
+#   3: @_apply_adam_11:CNode_69{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> sparse_opt}
+#   4: @_apply_adam_11:CNode_70{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> use_locking}
+#   5: @_apply_adam_11:CNode_71{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> use_nesterov}
+#   6: @_apply_adam_11:CNode_72{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>', [2]: ValueNode<Symbol> _is_device}
+#   7: @_apply_adam_11:CNode_73{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#   9: @_apply_adam_11:CNode_74{[0]: CNode_67, [1]: CNode_56, [2]: CNode_68, [3]: CNode_69, [4]: CNode_70, [5]: CNode_71, [6]: CNode_72, [7]: param_beta1_power, [8]: param_beta2_power, [9]: CNode_57, [10]: CNode_58, [11]: CNode_59, [12]: param_lr}
+#  10: @_apply_adam_11:CNode_75{[0]: ValueNode<Primitive> resolve, [1]: ValueNode<NameSpace> CommonOPS: 'Namespace:mindspore.graph._parse.trope', [2]: ValueNode<Symbol> MakeTuple}
+#  12: @_apply_adam_11:success{[0]: CNode_54, [1]: CNode_74, [2]: param_gradients, [3]: param_params, [4]: param_moment1, [5]: param_moment2}
+#  13: @_apply_adam_11:CNode_66{[0]: ValueNode<FuncGraph> _apply_adam_12}
+#  14: @_apply_adam_11:CNode_76{[0]: ValueNode<Primitive> Return, [1]: CNode_66}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_12 : 000002B2656AA8E0
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_12 parent: [subgraph @_apply_adam_11]() {
+
+#------------------------> 9
+  %0(CNode_77) = call @_apply_adam_13()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:780~791, 20~61/                    if self.use_amsgrad:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:780~791, 20~61/                    if self.use_amsgrad:/
+}
+# Order:
+#   1: @_apply_adam_12:CNode_77{[0]: ValueNode<FuncGraph> _apply_adam_13}
+#   2: @_apply_adam_12:CNode_78{[0]: ValueNode<Primitive> Return, [1]: CNode_77}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_13 : 000002B2656A8D10
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_13 parent: [subgraph @_apply_adam_11]() {
+
+#------------------------> 10
+  %0(CNode_79) = call @_apply_adam_14()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:774~791, 16~61/                if self.use_lazy:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:774~791, 16~61/                if self.use_lazy:/
+}
+# Order:
+#   1: @_apply_adam_13:CNode_79{[0]: ValueNode<FuncGraph> _apply_adam_14}
+#   2: @_apply_adam_13:CNode_80{[0]: ValueNode<Primitive> Return, [1]: CNode_79}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_14 : 000002B2656A9830
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_14 parent: [subgraph @_apply_adam_11]() {
+
+#------------------------> 11
+  %0(CNode_81) = call @_apply_adam_15()
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:754~791, 12~61/            if self.is_group_lr:/
+  Return(%0)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:754~791, 12~61/            if self.is_group_lr:/
+}
+# Order:
+#   1: @_apply_adam_14:CNode_81{[0]: ValueNode<FuncGraph> _apply_adam_15}
+#   2: @_apply_adam_14:CNode_82{[0]: ValueNode<Primitive> Return, [1]: CNode_81}
+
+
+subgraph attr:
+skip_auto_parallel_compile: 1
+subgraph instance: _apply_adam_15 : 000002B2656AAE70
+# In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:743~793, 4~22/    def _apply_adam(self, params, beta1_power, beta2_power, moment1, moment2, lr, gradients):/
+subgraph @_apply_adam_15 parent: [subgraph @_apply_adam_11]() {
+  %0(CNode_54) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], map_)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787, 34~43/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  %1(CNode_55) = resolve(NameSpace[SymbolStr: 'Namespace:mindspore.nn.optim.adam'], F)
+      : (<External, NoShape>, <External, NoShape>) -> (<External, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787, 44~45/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  %2(CNode_67) = getattr(%1, "partial")
+      : (<External, NoShape>, <String, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787, 44~53/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  %3(CNode_56) = resolve(NameSpace[SymbolStr: 'Namespace:mindspore.nn.optim.adam'], _adam_opt)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787, 54~63/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  %4(CNode_68) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], opt)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787, 65~73/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  %5(CNode_69) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], sparse_opt)
+      : (<External, NoShape>, <External, NoShape>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787, 75~90/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  %6(CNode_70) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], use_locking)
+      : (<External, NoShape>, <External, NoShape>) -> (<Bool, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:788, 54~70/                                                      self.use_locking, self.use_nesterov,/
+  %7(CNode_71) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], use_nesterov)
+      : (<External, NoShape>, <External, NoShape>) -> (<Bool, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:788, 72~89/                                                      self.use_locking, self.use_nesterov,/
+  %8(CNode_72) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], _is_device)
+      : (<External, NoShape>, <External, NoShape>) -> (<Bool, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:789, 54~69/                                                      self._is_device, beta1_power, beta2_power,/
+  %9(CNode_57) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], beta1)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tensor[Float32], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:790, 54~64/                                                      self.beta1, self.beta2, self.eps, lr), gradients, params,/
+  %10(CNode_58) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], beta2)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tensor[Float32], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:790, 66~76/                                                      self.beta1, self.beta2, self.eps, lr), gradients, params,/
+  %11(CNode_59) = resolve(NameSpace[ClassMember: 'Namespace:mindspore.nn.optim.adam..<Adam::2962634366128>'], eps)
+      : (<External, NoShape>, <External, NoShape>) -> (<Tensor[Float32], ()>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:790, 78~86/                                                      self.beta1, self.beta2, self.eps, lr), gradients, params,/
+  %12(CNode_74) = %2(%3, %4, %5, %6, %7, %8, $(@_apply_adam_7:para0_beta1_power), $(@_apply_adam_7:para0_beta2_power), %9, %10, %11, $(@_apply_adam_7:para0_lr))
+      : (<Func, NoShape>, <Func, NoShape>, <Func, NoShape>, <Bool, NoShape>, <Bool, NoShape>, <Bool, NoShape>, <Tensor[Float32], ()>, <Tensor[Float32], ()>, <Tensor[Float32], ()>, <Tensor[Float32], ()>, <Tensor[Float32], ()>, <Ref[Tensor[Float32]], ()>) -> (<Func, NoShape>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787~790, 44~91/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+
+#------------------------> 12
+  %13(success) = %0(%12, $(@_apply_adam_7:para0_gradients), $(@_apply_adam_7:para0_params), $(@_apply_adam_7:para0_moment1), $(@_apply_adam_7:para0_moment2))
+      : (<Func, NoShape>, <Tuple[], TupleShape()>, <Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>, <Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>, <Tuple[Ref[Tensor[Float32]]*10], TupleShape((50, 2), (50), (50, 50), (50), (50, 50), (50), (50, 50), (50), (1, 50), (1))>) -> (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:787~791, 34~61/                        success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt,/
+  Return(%13)
+      : (<null>)
+      #scope: (Default)
+      # In file C:\Users\yukidddd\AppData\Local\Programs\Python\Python310\lib\site-packages\mindspore\nn\optim\adam.py:793, 8~22/        return success/
+}
+# Order:
+#   1: @_apply_adam_15:CNode_83{[0]: ValueNode<Primitive> Return, [1]: success}
+
+
+# ===============================================================================================
+# The total of function graphs in evaluation stack: 13/14 (Ignored 1 internal frames).
+# ===============================================================================================
+
+
+# ===============================================================================================
+# The rest function graphs are the following:
+# ===============================================================================================
+No more function graphs.
+

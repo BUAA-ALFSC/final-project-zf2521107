@@ -1,0 +1,843 @@
+import warnings
+warnings.filterwarnings('ignore')
+
+import mindspore as ms
+import mindspore.nn as nn
+import mindspore.ops as ops
+import numpy as np
+import matplotlib.pyplot as plt
+from mindspore import Tensor, Parameter
+from mindspore.common import dtype as mstype
+
+ms.set_context(mode=ms.PYNATIVE_MODE)
+
+print(f"MindSpore version: {ms.__version__}")
+
+# ============================================================
+# Burgers 方程参考解（Method of Lines + Vectorized RK45）
+# ============================================================
+
+import numpy as np
+from scipy.integrate import solve_ivp
+
+
+def burgers_fd_solve(nu, nx=256, nt_uniform=100):
+    """
+    使用 Method of Lines + vectorized RK45 求解 Burgers 方程。
+    
+    空间离散（向量化 NumPy 实现）：
+    - 迎风格式（对流项）：基于局部 u 符号自动选择前向/后向差分
+    - 中心差分（扩散项）
+    
+    时间积分：scipy.integrate.solve_ivp 的 RK45 自适应步长方法
+    
+    优势：
+    - 向量化 NumPy 操作，计算速度极快（~0.1s/任务）
+    - 自适应时间步长，自动满足稳定性约束
+    - 对所有 ν 值数值稳定
+    """
+    x = np.linspace(-1, 1, nx)
+    dx = x[1] - x[0]
+    t_span = (0.0, 1.0)
+    t_eval = np.linspace(0, 1, nt_uniform)
+    
+    # 初始条件
+    u0 = -np.sin(np.pi * x)
+    u0[0] = 0.0
+    u0[-1] = 0.0
+    
+    # 内部点索引（向量化计算）
+    j = np.arange(1, nx - 1)
+    jp = j + 1  # j+1
+    jm = j - 1  # j-1
+    
+    def rhs(t, u):
+        """Burgers RHS: -u*u_x + nu*u_xx（向量化版本）"""
+        dudt = np.zeros_like(u)
+        up = u[jp]
+        um = u[jm]
+        uc = u[j]
+        
+        # 迎风格式（对流项）：基于局部 u 符号选择差分方向
+        ux = np.where(uc >= 0, (uc - um) / dx, (up - uc) / dx)
+        conv = -uc * ux
+        
+        # 中心差分（扩散项）
+        uxx = (up - 2.0 * uc + um) / dx**2
+        diff = nu * uxx
+        
+        dudt[j] = conv + diff
+        return dudt
+    
+    result = solve_ivp(rhs, t_span, u0, method='RK45', t_eval=t_eval,
+                       rtol=1e-6, atol=1e-8, max_step=0.01)
+    
+    return x, result.t, result.y.T  # (nt, nx)
+
+
+def burgers_reference_solution(x, t, nu, n_fourier=100):
+    """
+    计算 Burgers 方程的参考解。
+    
+    参数:
+        x: 空间坐标 (N,) 或 (N,1)
+        t: 时间坐标 (N,) 或 (N,1)
+        nu: 粘度系数
+    返回:
+        u: 参考解 (N,)
+    """
+    x_flat = np.asarray(x, dtype=np.float64).flatten()
+    t_flat = np.asarray(t, dtype=np.float64).flatten()
+    
+    # 细网格求解
+    nx = 400
+    nt = 100
+    x_grid, t_grid, u_grid = burgers_fd_solve(nu, nx=nx, nt_uniform=nt)
+    
+    # 双线性插值到查询点
+    result = np.zeros(len(x_flat))
+    for i, (xq, tq) in enumerate(zip(x_flat, t_flat)):
+        # 边界点严格返回值
+        if np.abs(xq + 1.0) < 1e-12 or np.abs(xq - 1.0) < 1e-12:
+            result[i] = 0.0
+            continue
+        if tq < 1e-12:
+            result[i] = -np.sin(np.pi * xq)
+            continue
+        
+        # 时间维度插值
+        t_idx = np.searchsorted(t_grid, tq)
+        t_idx = max(1, min(t_idx, len(t_grid) - 1))
+        alpha = (tq - t_grid[t_idx - 1]) / (t_grid[t_idx] - t_grid[t_idx - 1])
+        
+        # 空间维度插值
+        u_t1 = np.interp(xq, x_grid, u_grid[t_idx - 1, :])
+        u_t2 = np.interp(xq, x_grid, u_grid[t_idx, :])
+        result[i] = (1.0 - alpha) * u_t1 + alpha * u_t2
+    
+    return result
+
+# 验证参考解：t=0 时应收敛到 -sin(πx)
+x_test = np.linspace(-1, 1, 100)
+
+for nu_test in [0.02/np.pi, 0.01/np.pi, 0.005/np.pi]:
+    u_ref_ic = burgers_reference_solution(x_test, np.zeros(100), nu_test)
+    u_exact_ic = -np.sin(np.pi * x_test)
+    ic_error = np.max(np.abs(u_ref_ic - u_exact_ic))
+    
+    # 验证边界条件
+    u_ref_bc_left = burgers_reference_solution(-np.ones(10), np.random.rand(10), nu_test)
+    u_ref_bc_right = burgers_reference_solution(np.ones(10), np.random.rand(10), nu_test)
+    bc_error = max(np.max(np.abs(u_ref_bc_left)), np.max(np.abs(u_ref_bc_right)))
+    
+    print(f"nu = {nu_test:.6f}: IC error={ic_error:.2e}, BC error={bc_error:.2e}")
+
+# 快速解快照检查
+x_snap = np.linspace(-1, 1, 100)
+for nu_test in [0.02/np.pi, 0.01/np.pi, 0.005/np.pi]:
+    u_snap = burgers_reference_solution(x_snap, np.full(100, 0.5), nu_test)
+    print(f"nu = {nu_test:.6f}, t=0.5: u in [{u_snap.min():.4f}, {u_snap.max():.4f}]")
+
+print("\nReference solution verification: PASSED")
+
+# ---- 数据生成函数 ----
+def generate_task_data(nu, seed=42, n_u=800, n_f=2000):
+    """
+    为一个 Burgers 任务（给定 ν）生成训练/验证/评估数据。
+    
+    参数:
+        nu: 粘度系数
+        seed: 随机种子
+        n_u: 边界/初始条件采样点数
+        n_f: 内部配点（PDE残差）数
+    返回:
+        task: 包含所有必要数据的字典
+    """
+    np.random.seed(seed)
+    
+    # ---- 边界和初始条件点 ----
+    # 左边界 (x=-1, t∈[0,1])
+    x_left = -np.ones(n_u // 4)
+    t_left = np.random.uniform(0, 1, n_u // 4)
+    u_left = np.zeros(n_u // 4)
+    
+    # 右边界 (x=1, t∈[0,1])
+    x_right = np.ones(n_u // 4)
+    t_right = np.random.uniform(0, 1, n_u // 4)
+    u_right = np.zeros(n_u // 4)
+    
+    # 初始条件 (x∈[-1,1], t=0)
+    x_init = np.random.uniform(-1, 1, n_u // 2)
+    t_init = np.zeros(n_u // 2)
+    u_init = -np.sin(np.pi * x_init)
+    
+    # 合并所有 BC/IC 点
+    X_u_all = np.column_stack([
+        np.concatenate([x_left, x_right, x_init]),
+        np.concatenate([t_left, t_right, t_init])
+    ])
+    U_all = np.concatenate([u_left, u_right, u_init]).reshape(-1, 1)
+    
+    # ---- 内部配点（PDE残差）----
+    X_f_all = np.random.uniform(-1, 1, (n_f, 2))
+    X_f_all[:, 1] = np.random.uniform(0, 1, n_f)  # t ∈ [0, 1]
+    
+    # ---- 训练/验证分割 (80/20) ----
+    n_u_train = int(0.8 * n_u)
+    n_f_train = int(0.8 * n_f)
+    
+    perm_u = np.random.permutation(n_u)
+    perm_f = np.random.permutation(n_f)
+    
+    X_u_train = X_u_all[perm_u[:n_u_train]]
+    U_train = U_all[perm_u[:n_u_train]]
+    X_u_val = X_u_all[perm_u[n_u_train:]]
+    U_val = U_all[perm_u[n_u_train:]]
+    
+    X_f_train = X_f_all[perm_f[:n_f_train]]
+    X_f_val = X_f_all[perm_f[n_f_train:]]
+    
+    # ---- 全域评估网格 ----
+    nx_star, nt_star = 256, 100
+    x_star = np.linspace(-1, 1, nx_star)
+    t_star = np.linspace(0, 1, nt_star)
+    X_star_grid, T_star_grid = np.meshgrid(x_star, t_star)
+    X_star = np.column_stack([X_star_grid.flatten(), T_star_grid.flatten()])
+    
+    # 使用 Method of Lines + RK45 计算参考解
+    u_star = burgers_reference_solution(X_star[:, 0], X_star[:, 1], nu)
+    u_star = u_star.reshape(-1, 1)
+    
+    task = {
+        'nu': nu,
+        'X_u_train': X_u_train.astype(np.float32),
+        'U_train': U_train.astype(np.float32),
+        'X_f_train': X_f_train.astype(np.float32),
+        'X_u_val': X_u_val.astype(np.float32),
+        'U_val': U_val.astype(np.float32),
+        'X_f_val': X_f_val.astype(np.float32),
+        'X_star': X_star.astype(np.float32),
+        'u_star': u_star.astype(np.float32),
+    }
+    return task
+
+# ---- 生成任务（更多任务以增强元学习信号）----
+nu_train_values = [0.005 / np.pi, 0.008 / np.pi, 0.01 / np.pi, 0.015 / np.pi, 0.02 / np.pi]
+nu_test_value = 0.012 / np.pi  # 训练中未见过的中间值
+
+print("生成元训练任务...")
+train_tasks = []
+for i, nu in enumerate(nu_train_values):
+    task = generate_task_data(nu, seed=42 + i)
+    train_tasks.append(task)
+    print(f"  任务 {i+1}: ν = {nu:.6f}")
+
+print("生成元测试任务...")
+test_task = generate_task_data(nu_test_value, seed=100)
+print(f"  测试任务: ν = {nu_test_value:.6f}")
+
+print(f"\n所有任务数据生成完成。共 {len(train_tasks)} 个训练任务 + 1 个测试任务。")
+
+class PINN(nn.Cell):
+    """物理信息神经网络：逼近 Burgers 方程的解 u(x,t)。"""
+    def __init__(self, layers):
+        super(PINN, self).__init__()
+        self.net = nn.SequentialCell([
+            nn.Dense(layers[i], layers[i+1],
+                     activation=nn.Tanh() if i < len(layers) - 2 else None)
+            for i in range(len(layers) - 1)
+        ])
+    
+    def construct(self, x):
+        return self.net(x)
+
+# 模型架构
+layers = [2, 50, 50, 50, 50, 1]  # 输入 (x,t) → 输出 u
+
+def create_model():
+    """创建新PINN模型（辅助函数，用于元测试和基线对比）。"""
+    return PINN(layers)
+
+# ---- 功能式前向传播 ----
+def pinn_functional_forward(x, *params):
+    """
+    功能式PINN前向传播：使用传入的参数（而非模型内部参数）。
+    这允许梯度追踪穿过参数更新过程。
+    
+    params: 展平的参数序列 [W1, b1, W2, b2, ..., Wn, bn]
+    x: 输入 (N, 2)
+    返回: 预测 u (N, 1)
+    """
+    h = x
+    n_layers = len(params) // 2
+    for i in range(n_layers - 1):
+        w, b = params[2*i], params[2*i+1]
+        h = ops.tanh(ops.matmul(h, w.T) + b)
+    w, b = params[-2], params[-1]
+    h = ops.matmul(h, w.T) + b
+    return h
+
+# ---- 功能式 u(x,t) 预测 ----
+def net_u(x, t, *params):
+    return pinn_functional_forward(ops.concat((x, t), axis=1), *params)
+
+# ---- 预定义自动微分算子（避免每次调用重新创建）----
+_grad_u_x = ms.grad(net_u, grad_position=0)   # ∂u/∂x
+_grad_u_t = ms.grad(net_u, grad_position=1)   # ∂u/∂t
+_grad_u_xx = ms.grad(lambda x, t, *p: _grad_u_x(x, t, *p), grad_position=0)  # ∂²u/∂x²
+
+def compute_pde_residual(x_f, t_f, nu, *params):
+    """
+    计算 Burgers 方程 PDE 残差。
+    R(x,t) = u_t + u·u_x - ν·u_xx
+    """
+    u_val = net_u(x_f, t_f, *params)           # u(x,t)
+    u_x = _grad_u_x(x_f, t_f, *params)          # ∂u/∂x
+    u_t = _grad_u_t(x_f, t_f, *params)          # ∂u/∂t
+    u_xx = _grad_u_xx(x_f, t_f, *params)        # ∂²u/∂x²
+    residual = u_t + u_val * u_x - nu * u_xx
+    return residual
+
+def lal_loss(residual, alpha, c):
+    """
+    Learned Adaptive Loss (Psaros et al. 2022, Section 3.4.1.1).
+    rho_{alpha,c}(r) = |alpha-2|/alpha * (((r/c)^2/|alpha-2| + 1)^(alpha/2) - 1)
+
+    Automatically satisfies the optimal stationarity condition and MSE relation
+    condition (Proposition 1). Initialized with alpha=2.01, c=1/sqrt(2) to
+    approximate MSE loss.
+    """
+    abs_a2 = ops.absolute(alpha - 2.0)
+    scaled = (residual / c) ** 2 / abs_a2
+    loss = abs_a2 / alpha * ((scaled + 1.0) ** (alpha / 2.0) - 1.0)
+    return loss
+
+
+def compute_pinn_loss(X_u, U, X_f, alpha_u, log_c_u, alpha_f, log_c_f, nu, *params):
+    """
+    使用 LAL 参数化损失函数计算 PINN 总损失。
+
+    参数:
+        X_u: 边界/初始条件点 (N_u, 2)
+        U: 边界/初始条件真实值 (N_u, 1)
+        X_f: 内部配点 (N_f, 2)
+        alpha_u, log_c_u: 数据损失的 LAL 参数 (c_u = exp(log_c_u) > 0)
+        alpha_f, log_c_f: PDE 损失的 LAL 参数 (c_f = exp(log_c_f) > 0)
+        nu: 粘度系数
+        *params: 模型参数（展平后逐个传入）
+    返回:
+        总损失标量 = mean(LAL_data) + mean(LAL_pde)
+    """
+    # 数据损失（BC/IC）— LAL 参数化
+    x_u, t_u = X_u[:, 0:1], X_u[:, 1:2]
+    u_pred = net_u(x_u, t_u, *params)
+    residual_data = u_pred - U
+    c_u = ops.exp(log_c_u)  # 保证 c > 0
+    loss_data = ops.reduce_mean(lal_loss(residual_data, alpha_u, c_u))
+
+    # PDE 残差损失（Burgers 方程）— LAL 参数化
+    x_f, t_f = X_f[:, 0:1], X_f[:, 1:2]
+    residual_pde = compute_pde_residual(x_f, t_f, nu, *params)
+    c_f = ops.exp(log_c_f)
+    loss_pde = ops.reduce_mean(lal_loss(residual_pde, alpha_f, c_f))
+
+    return loss_data + loss_pde
+
+
+# ---- 预定义梯度函数 ----
+# 模型参数个数: layers = [2, 50, 50, 50, 50, 1] -> 5层 x 2参数 = 10个
+N_PARAMS = 10
+# grad_position: X_u(0), U(1), X_f(2), alpha_u(3), log_c_u(4), alpha_f(5), log_c_f(6), nu(7), params(8..17)
+GRAD_POSITIONS = tuple(range(8, 8 + N_PARAMS))
+
+# dL/dtheta（内循环用，对模型参数求导）
+_pinn_loss_grad = ms.grad(compute_pinn_loss, grad_position=GRAD_POSITIONS)
+
+def inner_loop_adapt(params, X_u, U, X_f, alpha_u, log_c_u, alpha_f, log_c_f, nu, inner_lr, inner_steps):
+    """
+    功能式内循环适配：对给定任务执行 K 步梯度下降。
+    使用预定义梯度函数 _pinn_loss_grad 避免重复创建 ms.grad。
+
+    返回: 适配后的参数元组 (tuple of Tensors)
+    """
+    adapted_params = params
+    for _ in range(inner_steps):
+        grads = _pinn_loss_grad(X_u, U, X_f, alpha_u, log_c_u, alpha_f, log_c_f, nu, *adapted_params)
+        adapted_params = tuple(
+            p - inner_lr * g for p, g in zip(adapted_params, grads)
+        )
+    return adapted_params
+
+
+def meta_loss_and_grads(alpha_u, log_c_u, alpha_f, log_c_f, model_params, train_tasks, inner_lr, inner_steps):
+    """
+    计算元损失，并返回 LAL 参数 (alpha_u, log_c_u, alpha_f, log_c_f) 的梯度。
+
+    使用 First-Order MAML 近似：
+    - 内循环适配模型参数（有梯度追踪）
+    - 对适配后的参数使用 stop_gradient 断开二阶路径
+    - 只计算验证损失对 LAL 参数的直接梯度
+
+    返回: (meta_loss, grad_alpha_u, grad_log_c_u, grad_alpha_f, grad_log_c_f)
+    """
+    total_grad_au = Tensor(0.0, mstype.float32)
+    total_grad_cu = Tensor(0.0, mstype.float32)
+    total_grad_af = Tensor(0.0, mstype.float32)
+    total_grad_cf = Tensor(0.0, mstype.float32)
+    total_val_loss = 0.0
+    n_tasks = len(train_tasks)
+
+    for task in train_tasks:
+        X_u = Tensor(task['X_u_train'], mstype.float32)
+        U = Tensor(task['U_train'], mstype.float32)
+        X_f = Tensor(task['X_f_train'], mstype.float32)
+        nu = task['nu']
+
+        X_u_val = Tensor(task['X_u_val'], mstype.float32)
+        U_val = Tensor(task['U_val'], mstype.float32)
+        X_f_val = Tensor(task['X_f_val'], mstype.float32)
+
+        # ---- 内循环适配 ----
+        adapted_params = inner_loop_adapt(
+            model_params, X_u, U, X_f, alpha_u, log_c_u, alpha_f, log_c_f, nu, inner_lr, inner_steps
+        )
+
+        # ---- 断开梯度链路（First-Order MAML 关键步骤）----
+        adapted_detached = tuple(ops.stop_gradient(p) for p in adapted_params)
+
+        # ---- 验证损失对 LAL 参数的直接梯度 ----
+        def val_loss_fn(au, cu, af, cf):
+            return compute_pinn_loss(X_u_val, U_val, X_f_val, au, cu, af, cf, nu, *adapted_detached)
+
+        val_grad_fn = ms.grad(val_loss_fn, grad_position=(0, 1, 2, 3))
+        g_au, g_cu, g_af, g_cf = val_grad_fn(alpha_u, log_c_u, alpha_f, log_c_f)
+
+        total_grad_au = total_grad_au + g_au
+        total_grad_cu = total_grad_cu + g_cu
+        total_grad_af = total_grad_af + g_af
+        total_grad_cf = total_grad_cf + g_cf
+
+        val_loss = val_loss_fn(alpha_u, log_c_u, alpha_f, log_c_f)
+        total_val_loss += val_loss.asnumpy()
+
+    avg_val_loss = total_val_loss / n_tasks
+    avg_grad_au = total_grad_au / n_tasks
+    avg_grad_cu = total_grad_cu / n_tasks
+    avg_grad_af = total_grad_af / n_tasks
+    avg_grad_cf = total_grad_cf / n_tasks
+
+    return avg_val_loss, avg_grad_au, avg_grad_cu, avg_grad_af, avg_grad_cf
+
+
+def compute_batch_train_loss(X_u_list, U_list, X_f_list, nu_list, alpha_u, log_c_u, alpha_f, log_c_f, *params):
+    """
+    计算基模型在所有任务训练数据上的平均损失。
+    用于同时更新基模型参数 theta。
+    """
+    total_loss = 0.0
+    for X_u, U, X_f, nu in zip(X_u_list, U_list, X_f_list, nu_list):
+        total_loss += compute_pinn_loss(X_u, U, X_f, alpha_u, log_c_u, alpha_f, log_c_f, nu, *params)
+    return total_loss / len(X_u_list)
+
+# 预定义基模型梯度函数
+# grad_position: params 在 X_u_list(0), U_list(1), X_f_list(2), nu_list(3), alpha_u(4), log_c_u(5), alpha_f(6), log_c_f(7) 之后
+_BASE_GRAD_POSITIONS = tuple(range(8, 8 + N_PARAMS))
+_model_loss_grad = ms.grad(compute_batch_train_loss, grad_position=_BASE_GRAD_POSITIONS)
+
+# ---- 超参数 ----
+inner_lr = 1e-3          # 内循环学习率（适配模型参数 SGD）
+outer_lr = 1e-3          # 外循环 Adam 学习率（更新 LAL 参数，论文使用 Adam）
+model_lr = 1e-4          # 基模型学习率
+inner_steps = 5          # 内循环梯度步数
+meta_iters = 1000        # 元训练迭代次数（论文使用 10000，CPU 上折中为 1000）
+
+# ---- 初始化 LAL 参数 ----
+# alpha=2.01, c=1/sqrt(2) ≈ 0.7071 (近似 MSE，论文 Section 3.4.1.1)
+# 用 log_c 参数化确保 c > 0
+init_alpha = 2.01
+init_log_c = np.log(1.0 / np.sqrt(2.0))  # ≈ -0.3466
+
+alpha_u = Parameter(Tensor(init_alpha, mstype.float32), name='alpha_u')
+log_c_u = Parameter(Tensor(init_log_c, mstype.float32), name='log_c_u')
+alpha_f = Parameter(Tensor(init_alpha, mstype.float32), name='alpha_f')
+log_c_f = Parameter(Tensor(init_log_c, mstype.float32), name='log_c_f')
+
+# LAL 参数 Adam 优化器（论文使用 Adam 作为外循环优化器）
+lal_optimizer = nn.Adam([alpha_u, log_c_u, alpha_f, log_c_f], learning_rate=outer_lr)
+
+# ---- 初始化基模型 ----
+model = create_model()
+model_params = tuple(Tensor(p.asnumpy(), mstype.float32) for p in model.trainable_params())
+
+print(f"内循环: SGD lr={inner_lr}, {inner_steps} 步")
+print(f"外循环: Adam lr={outer_lr}")
+print(f"LAL parametrization: rho(r) = |alpha-2|/alpha * (((r/c)^2/|alpha-2| + 1)^(alpha/2) - 1)")
+print(f"Initial: alpha_u={init_alpha}, c_u={np.exp(init_log_c):.4f}, alpha_f={init_alpha}, c_f={np.exp(init_log_c):.4f}")
+print(f"训练任务数: {len(train_tasks)}, 每步采样 1 个任务（T=1，论文设置）")
+
+# ---- 元训练循环 ----
+meta_history = {
+    'meta_loss': [],
+    'alpha_u': [], 'c_u': [],
+    'alpha_f': [], 'c_f': [],
+}
+
+# 预转换为 Tensor（避免每轮重复转换）
+X_u_batch = [Tensor(t['X_u_train'], mstype.float32) for t in train_tasks]
+U_batch = [Tensor(t['U_train'], mstype.float32) for t in train_tasks]
+X_f_batch = [Tensor(t['X_f_train'], mstype.float32) for t in train_tasks]
+nu_batch = [t['nu'] for t in train_tasks]
+
+print("Starting meta-training (First-Order MAML + LAL + Adam outer loop)...")
+print("=" * 70)
+
+for meta_iter in range(meta_iters):
+    # ---- T=1: 每次外循环采样 1 个任务（论文设置）----
+    task_idx = meta_iter % len(train_tasks)
+    current_tasks = [train_tasks[task_idx]]
+
+    # ---- 外循环：计算 LAL 参数的梯度（First-Order MAML）----
+    meta_loss, grad_au, grad_cu, grad_af, grad_cf = meta_loss_and_grads(
+        alpha_u, log_c_u, alpha_f, log_c_f, model_params, current_tasks, inner_lr, inner_steps
+    )
+
+    # Adam 更新 LAL 参数
+    lal_optimizer((grad_au, grad_cu, grad_af, grad_cf))
+
+    # ---- 更新基模型参数（所有任务）----
+    grads_model = _model_loss_grad(
+        X_u_batch, U_batch, X_f_batch, nu_batch, alpha_u, log_c_u, alpha_f, log_c_f, *model_params
+    )
+    model_params = tuple(
+        p - model_lr * g for p, g in zip(model_params, grads_model)
+    )
+
+    # ---- 记录 ----
+    c_u_val = float(ops.exp(log_c_u).asnumpy())
+    c_f_val = float(ops.exp(log_c_f).asnumpy())
+    alpha_u_val = float(alpha_u.asnumpy())
+    alpha_f_val = float(alpha_f.asnumpy())
+
+    meta_history['meta_loss'].append(meta_loss)
+    meta_history['alpha_u'].append(alpha_u_val)
+    meta_history['c_u'].append(c_u_val)
+    meta_history['alpha_f'].append(alpha_f_val)
+    meta_history['c_f'].append(c_f_val)
+
+    if meta_iter % 100 == 0:
+        print(f"Iter {meta_iter:4d} | Meta Loss: {meta_loss:.6f} | "
+              f"a_u={alpha_u_val:.4f}, c_u={c_u_val:.4f} | a_f={alpha_f_val:.4f}, c_f={c_f_val:.4f}")
+
+print("=" * 70)
+print("Meta-training complete!")
+print(f"Final LAL parameters:")
+print(f"  Data loss: alpha_u={float(alpha_u.asnumpy()):.4f}, c_u={float(ops.exp(log_c_u).asnumpy()):.4f}")
+print(f"  PDE loss:  alpha_f={float(alpha_f.asnumpy()):.4f}, c_f={float(ops.exp(log_c_f).asnumpy()):.4f}")
+
+def train_pinn_with_lal(model, task, alpha_u_val, log_c_u_val, alpha_f_val, log_c_f_val,
+                         learning_rate, epochs, verbose=True):
+    """使用给定的 LAL 参数从头训练 PINN 模型。"""
+    X_u = Tensor(task['X_u_train'], mstype.float32)
+    U = Tensor(task['U_train'], mstype.float32)
+    X_f = Tensor(task['X_f_train'], mstype.float32)
+    nu = task['nu']
+
+    au_t = Tensor(alpha_u_val, mstype.float32)
+    cu_t = Tensor(log_c_u_val, mstype.float32)
+    af_t = Tensor(alpha_f_val, mstype.float32)
+    cf_t = Tensor(log_c_f_val, mstype.float32)
+
+    optimizer = nn.Adam(model.trainable_params(), learning_rate=learning_rate)
+
+    loss_history = []
+    for epoch in range(epochs):
+        params = tuple(model.trainable_params())
+        grads = _pinn_loss_grad(X_u, U, X_f, au_t, cu_t, af_t, cf_t, nu, *params)
+        optimizer(grads)
+
+        params = tuple(model.trainable_params())
+        loss_val = compute_pinn_loss(X_u, U, X_f, au_t, cu_t, af_t, cf_t, nu, *params)
+        loss_history.append(float(loss_val.asnumpy()))
+
+        if verbose and epoch % 200 == 0:
+            print(f"  Epoch {epoch:4d}, Loss: {loss_val.asnumpy():.6f}")
+
+    return loss_history
+
+
+# ---- MSE 基线损失函数 ----
+def compute_pinn_loss_mse(X_u, U, X_f, nu, *params):
+    """标准 MSE PINN 损失（等效于 LAL 在 α→2, c=1 时的极限）。"""
+    x_u, t_u = X_u[:, 0:1], X_u[:, 1:2]
+    u_pred = net_u(x_u, t_u, *params)
+    loss_data = ops.reduce_mean((u_pred - U) ** 2)
+
+    x_f, t_f = X_f[:, 0:1], X_f[:, 1:2]
+    residual = compute_pde_residual(x_f, t_f, nu, *params)
+    loss_pde = ops.reduce_mean(residual ** 2)
+
+    return loss_data + loss_pde
+
+_MSE_GRAD_POSITIONS = tuple(range(4, 4 + N_PARAMS))  # X_u(0), U(1), X_f(2), nu(3), params(4..13)
+_pinn_loss_mse_grad = ms.grad(compute_pinn_loss_mse, grad_position=_MSE_GRAD_POSITIONS)
+
+
+def compute_pinn_loss_l1(X_u, U, X_f, nu, *params):
+    """L1 损失 PINN。"""
+    x_u, t_u = X_u[:, 0:1], X_u[:, 1:2]
+    u_pred = net_u(x_u, t_u, *params)
+    loss_data = ops.reduce_mean(ops.absolute(u_pred - U))
+
+    x_f, t_f = X_f[:, 0:1], X_f[:, 1:2]
+    residual = compute_pde_residual(x_f, t_f, nu, *params)
+    loss_pde = ops.reduce_mean(ops.absolute(residual))
+
+    return loss_data + loss_pde
+
+_pinn_loss_l1_grad = ms.grad(compute_pinn_loss_l1, grad_position=_MSE_GRAD_POSITIONS)
+
+
+def compute_pinn_loss_cauchy(X_u, U, X_f, nu, *params):
+    """Cauchy loss PINN: l(r) = ln(1 + r^2)."""
+    x_u, t_u = X_u[:, 0:1], X_u[:, 1:2]
+    u_pred = net_u(x_u, t_u, *params)
+    loss_data = ops.reduce_mean(ops.log(1.0 + (u_pred - U) ** 2))
+
+    x_f, t_f = X_f[:, 0:1], X_f[:, 1:2]
+    residual = compute_pde_residual(x_f, t_f, nu, *params)
+    loss_pde = ops.reduce_mean(ops.log(1.0 + residual ** 2))
+
+    return loss_data + loss_pde
+
+_pinn_loss_cauchy_grad = ms.grad(compute_pinn_loss_cauchy, grad_position=_MSE_GRAD_POSITIONS)
+
+
+def train_pinn_baseline(model, task, grad_fn, loss_fn, learning_rate, epochs, verbose=True):
+    """使用指定损失函数从头训练 PINN（MSE / L1 / Cauchy 基线）。"""
+    X_u = Tensor(task['X_u_train'], mstype.float32)
+    U = Tensor(task['U_train'], mstype.float32)
+    X_f = Tensor(task['X_f_train'], mstype.float32)
+    nu = task['nu']
+
+    optimizer = nn.Adam(model.trainable_params(), learning_rate=learning_rate)
+
+    loss_history = []
+    for epoch in range(epochs):
+        params = tuple(model.trainable_params())
+        grads = grad_fn(X_u, U, X_f, nu, *params)
+        optimizer(grads)
+
+        params = tuple(model.trainable_params())
+        loss_val = loss_fn(X_u, U, X_f, nu, *params)
+        loss_history.append(float(loss_val.asnumpy()))
+
+        if verbose and epoch % 200 == 0:
+            print(f"  Epoch {epoch:4d}, Loss: {loss_val.asnumpy():.6f}")
+
+    return loss_history
+
+
+def evaluate_pinn(model, task):
+    """评估 PINN 在任务全域上的 L2 相对误差和 MSE 损失分量（公平比较，统一用 MSE 评估）。"""
+    X_star = Tensor(task['X_star'], mstype.float32)
+    u_pred = model(X_star).asnumpy().flatten()
+    u_exact = task['u_star'].flatten()
+
+    l2_error = np.linalg.norm(u_exact - u_pred, 2) / np.linalg.norm(u_exact, 2)
+
+    X_u = Tensor(task['X_u_train'], mstype.float32)
+    U = Tensor(task['U_train'], mstype.float32)
+    X_f = Tensor(task['X_f_train'], mstype.float32)
+    nu = task['nu']
+
+    x_u, t_u = X_u[:, 0:1], X_u[:, 1:2]
+    u_pred_u = model(ops.concat((x_u, t_u), 1))
+    loss_data = float(ops.reduce_mean((u_pred_u - U) ** 2).asnumpy())
+
+    x_f, t_f = X_f[:, 0:1], X_f[:, 1:2]
+    params = tuple(model.trainable_params())
+    residual = compute_pde_residual(x_f, t_f, nu, *params)
+    loss_pde = float(ops.reduce_mean(residual ** 2).asnumpy())
+
+    return {
+        'l2_error': l2_error,
+        'loss_data': loss_data,
+        'loss_pde': loss_pde,
+        'u_pred': u_pred
+    }
+
+
+print("=" * 70)
+print("元测试：对比 LAL 元学习 vs MSE vs L1 vs Cauchy 基线")
+print(f"测试任务: ν = {test_task['nu']:.6f}")
+print("=" * 70)
+
+results_all = {}
+histories_all = {}
+
+# ---- 方案A：LAL 元学习 ----
+print("\n>>> 方案A: LAL 元学习损失")
+alpha_u_final = float(alpha_u.asnumpy())
+log_c_u_final = float(log_c_u.asnumpy())
+alpha_f_final = float(alpha_f.asnumpy())
+log_c_f_final = float(log_c_f.asnumpy())
+c_u_final = float(ops.exp(log_c_u).asnumpy())
+c_f_final = float(ops.exp(log_c_f).asnumpy())
+print(f"Params: alpha_u={alpha_u_final:.4f}, c_u={c_u_final:.4f}, alpha_f={alpha_f_final:.4f}, c_f={c_f_final:.4f}")
+
+model_lal = create_model()
+history_lal = train_pinn_with_lal(
+    model_lal, test_task, alpha_u_final, log_c_u_final,
+    alpha_f_final, log_c_f_final, learning_rate=1e-4, epochs=1000
+)
+results_lal = evaluate_pinn(model_lal, test_task)
+results_all['LAL (ours)'] = results_lal
+histories_all['LAL (ours)'] = history_lal
+print(f"结果: L2={results_lal['l2_error']:.6f}, MSE_data={results_lal['loss_data']:.6e}, MSE_pde={results_lal['loss_pde']:.6e}")
+
+# ---- 方案B：MSE 基线 ----
+print("\n>>> 方案B: MSE 损失（传统 PINN）")
+model_mse = create_model()
+history_mse = train_pinn_baseline(
+    model_mse, test_task, _pinn_loss_mse_grad, compute_pinn_loss_mse,
+    learning_rate=1e-4, epochs=1000
+)
+results_mse = evaluate_pinn(model_mse, test_task)
+results_all['MSE'] = results_mse
+histories_all['MSE'] = history_mse
+print(f"结果: L2={results_mse['l2_error']:.6f}, MSE_data={results_mse['loss_data']:.6e}, MSE_pde={results_mse['loss_pde']:.6e}")
+
+# ---- 方案C：L1 基线 ----
+print("\n>>> 方案C: L1 损失")
+model_l1 = create_model()
+history_l1 = train_pinn_baseline(
+    model_l1, test_task, _pinn_loss_l1_grad, compute_pinn_loss_l1,
+    learning_rate=1e-4, epochs=1000
+)
+results_l1 = evaluate_pinn(model_l1, test_task)
+results_all['L1'] = results_l1
+histories_all['L1'] = history_l1
+print(f"结果: L2={results_l1['l2_error']:.6f}, MSE_data={results_l1['loss_data']:.6e}, MSE_pde={results_l1['loss_pde']:.6e}")
+
+# ---- 方案D：Cauchy 基线 ----
+print("\n>>> 方案D: Cauchy 损失")
+model_cauchy = create_model()
+history_cauchy = train_pinn_baseline(
+    model_cauchy, test_task, _pinn_loss_cauchy_grad, compute_pinn_loss_cauchy,
+    learning_rate=1e-4, epochs=1000
+)
+results_cauchy = evaluate_pinn(model_cauchy, test_task)
+results_all['Cauchy'] = results_cauchy
+histories_all['Cauchy'] = history_cauchy
+print(f"结果: L2={results_cauchy['l2_error']:.6f}, MSE_data={results_cauchy['loss_data']:.6e}, MSE_pde={results_cauchy['loss_pde']:.6e}")
+
+# ---- 汇总 ----
+print("\n" + "=" * 70)
+print("对比摘要:")
+print(f"  {'方法':<15} {'L2相对误差':<14} {'数据损失(MSE)':<16} {'PDE损失(MSE)':<16}")
+print(f"  {'-'*15} {'-'*14} {'-'*16} {'-'*16}")
+for name, r in results_all.items():
+    print(f"  {name:<15} {r['l2_error']:<14.6f} {r['loss_data']:<16.6e} {r['loss_pde']:<16.6e}")
+print("=" * 70)
+
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial']
+plt.rcParams['axes.unicode_minus'] = False
+
+fig = plt.figure(figsize=(18, 12))
+
+# ---- (1) 元训练损失 ----
+ax1 = fig.add_subplot(2, 3, 1)
+ax1.plot(meta_history['meta_loss'], 'b-', linewidth=1, alpha=0.7)
+ax1.set_xlabel('Meta Iteration')
+ax1.set_ylabel('Meta Loss')
+ax1.set_title('(a) Meta-Training Loss (LAL)')
+ax1.set_yscale('log')
+ax1.grid(True, alpha=0.3)
+
+# ---- (2) LAL 参数演化 ----
+ax2 = fig.add_subplot(2, 3, 2)
+ax2.plot(meta_history['alpha_u'], 'b-', label=r'$\alpha_{data}$', linewidth=1.5)
+ax2.plot(meta_history['c_u'], 'b--', label=r'$c_{data}$', linewidth=1.5)
+ax2.plot(meta_history['alpha_f'], 'r-', label=r'$\alpha_{pde}$', linewidth=1.5)
+ax2.plot(meta_history['c_f'], 'r--', label=r'$c_{pde}$', linewidth=1.5)
+ax2.axhline(y=2.0, color='gray', linestyle=':', alpha=0.5, label='α=2 (MSE limit)')
+ax2.set_xlabel('Meta Iteration')
+ax2.set_ylabel('Parameter Value')
+ax2.set_title('(b) LAL Parameter Evolution')
+ax2.legend(fontsize=7, ncol=2)
+ax2.grid(True, alpha=0.3)
+
+# ---- (3) 测试任务：训练损失对比 ----
+ax3 = fig.add_subplot(2, 3, 3)
+colors_loss = {'LAL (ours)': 'blue', 'MSE': 'red', 'L1': 'orange', 'Cauchy': 'green'}
+for name, hist in histories_all.items():
+    ax3.plot(hist, color=colors_loss.get(name, 'gray'),
+             label=name, linewidth=1.5, alpha=0.8)
+ax3.set_xlabel('Epoch')
+ax3.set_ylabel('Training Loss')
+ax3.set_title(f'(c) Test Task (ν={test_task["nu"]:.4f}): Loss Curves')
+ax3.set_yscale('log')
+ax3.legend(fontsize=8)
+ax3.grid(True, alpha=0.3)
+
+# ---- (4) t=0.25 时解对比 ----
+ax4 = fig.add_subplot(2, 3, 4)
+X_star = test_task['X_star']
+T_flat = X_star[:, 1]
+
+t_target = 0.25
+idx_t = np.abs(T_flat - t_target) < 0.01
+x_plot = X_star[idx_t, 0]
+u_exact_plot = test_task['u_star'][idx_t].flatten()
+
+X_star_tensor = Tensor(X_star[idx_t], mstype.float32)
+u_lal_plot = model_lal(X_star_tensor).asnumpy().flatten()
+u_mse_plot = model_mse(X_star_tensor).asnumpy().flatten()
+
+ax4.plot(x_plot, u_exact_plot, 'k-', label='Exact', linewidth=2)
+ax4.plot(x_plot, u_lal_plot, 'b--', label='LAL (ours)', linewidth=1.5)
+ax4.plot(x_plot, u_mse_plot, 'r:', label='MSE Baseline', linewidth=1.5)
+ax4.set_xlabel('x')
+ax4.set_ylabel('u')
+ax4.set_title(f'(d) Solution at t={t_target}')
+ax4.legend(fontsize=8)
+ax4.grid(True, alpha=0.3)
+
+# ---- (5) t=0.5 时解对比 ----
+ax5 = fig.add_subplot(2, 3, 5)
+t_target2 = 0.5
+idx_t2 = np.abs(T_flat - t_target2) < 0.01
+x_plot2 = X_star[idx_t2, 0]
+u_exact_plot2 = test_task['u_star'][idx_t2].flatten()
+
+X_star_tensor2 = Tensor(X_star[idx_t2], mstype.float32)
+u_lal_plot2 = model_lal(X_star_tensor2).asnumpy().flatten()
+u_mse_plot2 = model_mse(X_star_tensor2).asnumpy().flatten()
+
+ax5.plot(x_plot2, u_exact_plot2, 'k-', label='Exact', linewidth=2)
+ax5.plot(x_plot2, u_lal_plot2, 'b--', label='LAL (ours)', linewidth=1.5)
+ax5.plot(x_plot2, u_mse_plot2, 'r:', label='MSE Baseline', linewidth=1.5)
+ax5.set_xlabel('x')
+ax5.set_ylabel('u')
+ax5.set_title(f'(e) Solution at t={t_target2}')
+ax5.legend(fontsize=8)
+ax5.grid(True, alpha=0.3)
+
+# ---- (6) 误差对比柱状图 ----
+ax6 = fig.add_subplot(2, 3, 6)
+methods = list(results_all.keys())
+l2_errors = [results_all[m]['l2_error'] for m in methods]
+bar_colors = ['#2196F3', '#FF5722', '#FF9800', '#4CAF50']
+bars = ax6.bar(methods, l2_errors, color=bar_colors[:len(methods)], edgecolor='black', linewidth=1.2)
+ax6.set_ylabel('Relative L2 Error')
+ax6.set_title('(f) L2 Error Comparison on Test Task')
+ax6.grid(True, alpha=0.3, axis='y')
+
+for bar, err in zip(bars, l2_errors):
+    ax6.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.0005,
+             f'{err:.4f}', ha='center', va='bottom', fontweight='bold', fontsize=9)
+
+plt.tight_layout()
+plt.savefig('./imgs/improved_result.png', dpi=150, bbox_inches='tight')
+plt.show()
+print("\n综合结果图已保存至 ./imgs/improved_result.png")
