@@ -6,6 +6,14 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-green)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
+## 团队成员
+
+|学号|姓名|
+| --- | --- | 
+|ZF2521107|丁佩东|
+|ZF2521122|李广志|
+
+
 ## 项目简介
 
 物理信息神经网络（Physics-Informed Neural Networks, PINN）求解偏微分方程时，其性能高度依赖于损失函数中各项权重的设计。传统方法采用均匀的均方误差（MSE）损失，无法适应不同 PDE 任务的特异性。
@@ -53,10 +61,6 @@ pip install mindspore numpy scipy matplotlib jupyter
 ├── imgs/                         # 结果图片
 │   ├── improved_result.png       # 综合分析面板图
 │   ├── result.png                # 中间结果
-│   └── ...
-├── PPT/                          # 答辩 PPT（LaTeX Beamer + PDF/PPTX）
-│   ├── main.tex                  # PPT LaTeX 源文件
-│   ├── main.pdf                  # 编译后的 PDF
 │   └── ...
 └── Psaros 等 - 2022 - Meta-learning PINN loss functions.pdf  # 原始论文
 ```
@@ -219,10 +223,3 @@ FFN 的 1720 个参数给予了损失函数极大的灵活性，导致其"过度
 1. Psaros, A. F., et al. (2022). *Meta-learning PINN loss functions.* Journal of Computational Physics, 458, 111121.
 2. Raissi, M., Perdikaris, P., & Karniadakis, G. E. (2019). *Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations.* Journal of Computational Physics, 378, 686-707.
 3. Finn, C., Abbeel, P., & Levine, S. (2017). *Model-agnostic meta-learning for fast adaptation of deep networks.* ICML 2017.
-
-## 作者
-
-- **学号**：ZF2521107
-- **成员**：丁佩东
-- **学号**：ZF2521122
-- **成员**：李广志
