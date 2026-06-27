@@ -223,3 +223,27 @@ FFN 的 1720 个参数给予了损失函数极大的灵活性，导致其"过度
 1. Psaros, A. F., et al. (2022). *Meta-learning PINN loss functions.* Journal of Computational Physics, 458, 111121.
 2. Raissi, M., Perdikaris, P., & Karniadakis, G. E. (2019). *Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations.* Journal of Computational Physics, 378, 686-707.
 3. Finn, C., Abbeel, P., & Levine, S. (2017). *Model-agnostic meta-learning for fast adaptation of deep networks.* ICML 2017.
+
+
+## 在线课程截图
+* 【学号】：ZF2521107
+* 【姓名】：丁佩东
+![img](./imgs/课程学习截图_ZF2521107_丁佩东.png)
+
+* 【学号】：ZF2521122
+* 【姓名】：李广志
+
+![img](./imgs/课程学习截图_ZF2521122_李广志.png)
+## 开源社区截图
+* 【学号】：ZF2521107
+* 【姓名】：丁佩东
+* 【作业任务】：Comment
+* 【链接】：https://gitcode.com/cann/asc-devkit/issues/526
+* 【截图】
+![img](./imgs/开源社区截图_ZF2521107_丁佩东.png)
+* 【学号】：ZF2521122
+* 【姓名】：李广志
+* 【作业任务】：Issue
+* 【链接】：https://gitcode.com/cann/pypto/issues/2228
+* 【截图】
+![img](./imgs/开源社区截图_ZF2521122_李广志.png)
